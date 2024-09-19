@@ -38,7 +38,7 @@ app.use(passport.session());
 // Enable CORS (Allow requests from the React app)
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "*", // Your frontend client origin (adjust as necessary)
+    origin: process.env.CLIENT_ORIGIN || "https://www.dannysprojects.xyz", // Your frontend client origin (adjust as necessary)
     credentials: true, // Allow credentials like cookies and sessions to be passed
   })
 );
