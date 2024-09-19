@@ -16,7 +16,7 @@ app.use(
   session({
     secret: process.env.SESSION_SECRET || "your_secret_key", // Use a secure secret
     resave: false,
-    saveUninitialized: true, // Only create session when necessary
+    saveUninitialized: false, // Only create session when necessary
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI, // Reuse MongoDB connection URI
       collectionName: "sessions", // MongoDB collection for sessions
