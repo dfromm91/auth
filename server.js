@@ -28,7 +28,12 @@ app.use(
     },
   })
 );
-
+app.use((req, res, next) => {
+  if (req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(['https://', req.get('Host'), req.url].join(''));
+  }
+  next();
+});
 
 app.use(express.json()); // This will parse JSON request bodies
 
