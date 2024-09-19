@@ -14,20 +14,21 @@ const app = express();
 // Express session middleware using connect-mongo
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your_secret_key", // Make sure to use a secure secret
+    secret: process.env.SESSION_SECRET || "your_secret_key", // Use a secure secret
     resave: false,
-    saveUninitialized: false, // Only create session when necessary
+    saveUninitialized: true, // Only create session when necessary
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI, // Reuse MongoDB connection URI
-      collectionName: "sessions", // Name of the MongoDB collection for sessions
+      collectionName: "sessions", // MongoDB collection for sessions
     }),
     cookie: {
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // Only use 'None' in production
-      secure: process.env.NODE_ENV === "production", // Only set secure cookies in production
-      maxAge: 1000 * 60 * 60 * 24, // Session expiration time (1 day)
+      sameSite: "None", // Use 'None' for cross-origin requests
+      secure: true, // Set secure cookies only in production
+      maxAge: 1000 * 60 * 60 * 24, // 1 day expiration
     },
   })
 );
+
 
 app.use(express.json()); // This will parse JSON request bodies
 
