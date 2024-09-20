@@ -10,7 +10,12 @@ const cors = require("cors");
 const MongoStore = require("connect-mongo"); // Add this for MongoDB session storage
 
 const app = express();
-
+app.use(cors({
+  origin: "https://bananagrams.onrender.com", // Your React frontend
+  methods: ["GET", "POST"],
+  credentials: true, // Allow credentials like cookies/sessions
+   preflightContinue: false,
+}));
 // Express session middleware using connect-mongo
 app.use(
   session({
@@ -30,6 +35,7 @@ app.use(
 app.use((req, res, next) => {
   console.log("Session ID:", req.sessionID);
   if (req.headers['x-forwarded-proto'] !== 'https') {
+    console.log('redirecting')
     return res.redirect(['https://', req.get('Host'), req.url].join(''));
   }
   next();
@@ -42,11 +48,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Enable CORS (Allow requests from the React app)
-app.use(cors({
-  origin: "https://bananagrams.onrender.com", // Your React frontend
-  methods: ["GET", "POST"],
-  credentials: true, // Allow credentials like cookies/sessions
-}));
+
 
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
