@@ -42,12 +42,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Enable CORS (Allow requests from the React app)
-app.use(
-  cors({
-    origin: "https://bananagrams.onrender.com", // Your frontend client origin (adjust as necessary)
-    credentials: true, // Allow credentials like cookies and sessions to be passed
-  })
-);
+app.use(cors({
+  origin: "https://bananagrams.onrender.com", // Your React frontend
+  methods: ["GET", "POST"],
+  credentials: true, // Allow credentials like cookies/sessions
+}));
+
 
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
