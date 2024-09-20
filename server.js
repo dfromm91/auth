@@ -7,16 +7,19 @@ const session = require("express-session");
 const path = require("path");
 const User = require("./models/User");
 const cors = require("cors");
-const MongoStore = require("connect-mongo"); // Add this for MongoDB session storage
+const MongoStore = require("connect-mongo");
 
 const app = express();
 
-app.use(cors({
-  origin: "https://bananagrams.onrender.com", // Your React frontend
-  methods: ["GET", "POST"],
-  credentials: true, // Allow credentials like cookies/sessions
-  preflightContinue: false,
-}));
+// CORS configuration
+app.use(
+  cors({
+    origin: "https://bananagrams.onrender.com", // Your React frontend
+    methods: ["GET", "POST"],
+    credentials: true, // Allow credentials like cookies/sessions
+    preflightContinue: false,
+  })
+);
 
 // Express session middleware using connect-mongo
 app.use(
@@ -29,8 +32,8 @@ app.use(
       collectionName: "sessions", // MongoDB collection for sessions
     }),
     cookie: {
-      sameSite: "None", // Use 'None' for cross-origin requests
-      secure: true, // Set secure cookies only in production
+      sameSite: "None", // For cross-origin requests
+      secure: true, // Secure cookies in production
       maxAge: 1000 * 60 * 60 * 24, // 1 day expiration
     },
   })
@@ -41,9 +44,9 @@ app.use((req, res, next) => {
   console.log("Session middleware triggered");
   console.log("Session ID:", req.sessionID);
   console.log("Session Data:", req.session);
-  if (req.headers['x-forwarded-proto'] !== 'https') {
-    console.log('Redirecting to HTTPS');
-    return res.redirect(['https://', req.get('Host'), req.url].join(''));
+  if (req.headers["x-forwarded-proto"] !== "https") {
+    console.log("Redirecting to HTTPS");
+    return res.redirect(["https://", req.get("Host"), req.url].join(""));
   }
   next();
 });
@@ -139,15 +142,22 @@ app.get("/", (req, res) => {
 // Google OAuth routes
 app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
-app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/" }), (req, res) => {
-  console.log("OAuth success, user authenticated:", req.user);
-  console.log("Session after OAuth callback:", req.session);
-  res.redirect(process.env.CLIENT_URL || "http://localhost:5173/");
-});
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/" }),
+  (req, res) => {
+    console.log("OAuth success, user authenticated:", req.user);
+    console.log("Session after OAuth callback:", req.session);
+    res.redirect(process.env.CLIENT_URL || "http://localhost:5173/");
+  }
+);
 
 // Logout route
 app.get("/logout", (req, res) => {
-  res.setHeader("Set-Cookie", "connect.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=None; Secure");
+  res.setHeader(
+    "Set-Cookie",
+    "connect.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=None; Secure"
+  );
   req.logout((err) => {
     if (err) {
       console.error("Error during logout:", err);
@@ -159,7 +169,7 @@ app.get("/logout", (req, res) => {
   });
 });
 
-// Check authentication status
+// Endpoint to check authentication status
 app.get("/auth/google/status", (req, res) => {
   console.log("Auth status route, session:", req.session);
   if (req.isAuthenticated()) {
@@ -171,7 +181,7 @@ app.get("/auth/google/status", (req, res) => {
   }
 });
 
-// Fetch leaderboard
+// Leaderboard route
 app.get("/leaderboard", async (req, res) => {
   try {
     const leaderboard = await User.find().sort({ wins: -1 }).limit(10);
@@ -183,7 +193,7 @@ app.get("/leaderboard", async (req, res) => {
   }
 });
 
-// Update user wins
+// Update wins route
 app.post("/update-wins", async (req, res) => {
   const { googleId } = req.body;
   console.log("Updating wins for googleId:", googleId);
@@ -204,7 +214,7 @@ app.post("/update-wins", async (req, res) => {
   }
 });
 
-// Update user losses
+// Update losses route
 app.post("/update-losses", async (req, res) => {
   const { googleId } = req.body;
   console.log("Updating losses for googleId:", googleId);
@@ -215,7 +225,7 @@ app.post("/update-losses", async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    user.losses += 1; // Increment the player's losses
+    user.losses += 1; // Increment the user's losses
     await user.save();
     console.log("Losses incremented for user:", user);
     return res.json({ success: true, message: "Losses incremented", losses: user.losses });
@@ -225,7 +235,7 @@ app.post("/update-losses", async (req, res) => {
   }
 });
 
-// Get user's profile by Google ID
+// Fetch user's profile by Google ID
 app.get("/profile/:googleId", async (req, res) => {
   console.log("Fetching profile for googleId:", req.params.googleId);
   try {
