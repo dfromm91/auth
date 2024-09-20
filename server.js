@@ -136,6 +136,7 @@ app.get(
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
     // Successful authentication, redirect to the game setup in the React app
+    console.log('success')
     res.redirect(process.env.CLIENT_URL || "http://localhost:5173/");
   }
 );
@@ -159,8 +160,10 @@ app.get("/logout", (req, res) => {
 app.get("/auth/google/status", (req, res) => {
   if (req.isAuthenticated()) {
     res.json({ isAuthenticated: true, user: req.user });
+    console.log('you are in');
   } else {
     res.json({ isAuthenticated: false });
+    console.log('nope')
   }
 });
 
