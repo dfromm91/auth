@@ -14,13 +14,9 @@ const app = express();
 // Express session middleware using connect-mongo
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your_secret_key", // Use a secure secret
+    secret: process.env.SESSION_SECRET || "your_secret_key", // Keep this secure
     resave: false,
     saveUninitialized: false, // Only create session when necessary
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI, // Reuse MongoDB connection URI
-      collectionName: "sessions", // MongoDB collection for sessions
-    }),
     cookie: {
       sameSite: "None", // Use 'None' for cross-origin requests
       secure: true, // Set secure cookies only in production
@@ -28,6 +24,7 @@ app.use(
     },
   })
 );
+
 
 // Middleware to log session info
 app.use((req, res, next) => {
