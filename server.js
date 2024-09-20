@@ -10,18 +10,24 @@ const cors = require("cors");
 const MongoStore = require("connect-mongo"); // Add this for MongoDB session storage
 
 const app = express();
+
 app.use(cors({
   origin: "https://bananagrams.onrender.com", // Your React frontend
   methods: ["GET", "POST"],
   credentials: true, // Allow credentials like cookies/sessions
-   preflightContinue: false,
+  preflightContinue: false,
 }));
+
 // Express session middleware using connect-mongo
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "your_secret_key", // Keep this secure
     resave: false,
     saveUninitialized: false, // Only create session when necessary
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI, // MongoDB connection URI
+      collectionName: "sessions", // MongoDB collection for sessions
+    }),
     cookie: {
       sameSite: "None", // Use 'None' for cross-origin requests
       secure: true, // Set secure cookies only in production
@@ -30,30 +36,28 @@ app.use(
   })
 );
 
-
 // Middleware to log session info
 app.use((req, res, next) => {
+  console.log("Session middleware triggered");
   console.log("Session ID:", req.sessionID);
+  console.log("Session Data:", req.session);
   if (req.headers['x-forwarded-proto'] !== 'https') {
-    console.log('redirecting')
+    console.log('Redirecting to HTTPS');
     return res.redirect(['https://', req.get('Host'), req.url].join(''));
   }
   next();
 });
 
-app.use(express.json()); // This will parse JSON request bodies
+app.use(express.json()); // Parse JSON request bodies
 
 // Initialize Passport and restore authentication state from the session
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Enable CORS (Allow requests from the React app)
-
-
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// Connect to MongoDB
+// MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
@@ -63,10 +67,10 @@ mongoose
     });
   })
   .catch(() => {
-    console.log("Connection failed");
+    console.log("MongoDB connection failed");
   });
 
-// Passport configuration
+// Passport configuration for Google OAuth
 passport.use(
   new GoogleStrategy(
     {
@@ -80,7 +84,6 @@ passport.use(
 
         // Check if user already exists in DB
         let user = await User.findOne({ googleId: profile.id });
-
         if (user) {
           console.log("User found in DB:", user);
           return done(null, user);
@@ -122,11 +125,10 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Routes
-
 // Default home route
 app.get("/", (req, res) => {
   console.log("Home route accessed, user:", req.user);
+  console.log("Session at home route:", req.session);
   if (req.user) {
     res.send(`Hello ${req.user.displayName}, you are logged in!`);
   } else {
@@ -135,27 +137,17 @@ app.get("/", (req, res) => {
 });
 
 // Google OAuth routes
-app.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
+app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
-app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
-  (req, res) => {
-    console.log("OAuth success, user authenticated:", req.user);
-    // Successful authentication, redirect to the game setup in the React app
-    res.redirect(process.env.CLIENT_URL || "http://localhost:5173/");
-  }
-);
+app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/" }), (req, res) => {
+  console.log("OAuth success, user authenticated:", req.user);
+  console.log("Session after OAuth callback:", req.session);
+  res.redirect(process.env.CLIENT_URL || "http://localhost:5173/");
+});
 
-// Logout route on the server
+// Logout route
 app.get("/logout", (req, res) => {
-  res.setHeader(
-    "Set-Cookie",
-    "connect.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=None; Secure"
-  );
+  res.setHeader("Set-Cookie", "connect.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=None; Secure");
   req.logout((err) => {
     if (err) {
       console.error("Error during logout:", err);
@@ -163,12 +155,13 @@ app.get("/logout", (req, res) => {
     }
     console.log("User logged out, session destroyed.");
     req.session.destroy(); // Destroy session on the server
-    res.redirect("/"); // Redirect to homepage after logout
+    res.redirect("/");
   });
 });
 
-// Endpoint to check authentication status
+// Check authentication status
 app.get("/auth/google/status", (req, res) => {
+  console.log("Auth status route, session:", req.session);
   if (req.isAuthenticated()) {
     console.log("User is authenticated:", req.user);
     res.json({ isAuthenticated: true, user: req.user });
@@ -178,6 +171,7 @@ app.get("/auth/google/status", (req, res) => {
   }
 });
 
+// Fetch leaderboard
 app.get("/leaderboard", async (req, res) => {
   try {
     const leaderboard = await User.find().sort({ wins: -1 }).limit(10);
@@ -189,65 +183,49 @@ app.get("/leaderboard", async (req, res) => {
   }
 });
 
-// Add this new route to handle win updates
+// Update user wins
 app.post("/update-wins", async (req, res) => {
   const { googleId } = req.body;
   console.log("Updating wins for googleId:", googleId);
   try {
     const user = await User.findOne({ googleId });
-
     if (!user) {
       console.log("User not found:", googleId);
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     user.wins += 1; // Increment the user's wins
     await user.save();
-
     console.log("Wins incremented for user:", user);
-    return res.json({
-      success: true,
-      message: "Wins incremented",
-      wins: user.wins,
-    });
+    return res.json({ success: true, message: "Wins incremented", wins: user.wins });
   } catch (error) {
     console.error("Error updating wins:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
+// Update user losses
 app.post("/update-losses", async (req, res) => {
   const { googleId } = req.body;
   console.log("Updating losses for googleId:", googleId);
-
   try {
     const user = await User.findOne({ googleId });
-
     if (!user) {
       console.log("User not found:", googleId);
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     user.losses += 1; // Increment the player's losses
     await user.save();
-
     console.log("Losses incremented for user:", user);
-    return res.json({
-      success: true,
-      message: "Losses incremented",
-      losses: user.losses,
-    });
+    return res.json({ success: true, message: "Losses incremented", losses: user.losses });
   } catch (error) {
     console.error("Error updating losses:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// Route to get user's wins and losses using googleId
+// Get user's profile by Google ID
 app.get("/profile/:googleId", async (req, res) => {
   console.log("Fetching profile for googleId:", req.params.googleId);
   try {
