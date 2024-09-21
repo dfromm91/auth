@@ -120,8 +120,13 @@ passport.serializeUser((user, done) => {
 
 // Deserialize user from the session
 passport.deserializeUser(async (id, done) => {
+  console.log("Attempting to deserialize user:", id);
   try {
     const user = await User.findById(id);
+    if (!user) {
+      console.log("User not found during deserialization:", id);
+      return done(null, false);
+    }
     console.log("Deserializing user from session:", user);
     done(null, user);
   } catch (err) {
