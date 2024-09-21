@@ -103,20 +103,17 @@ app.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"], session: false })
 );
-
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
+  passport.authenticate("google", { failureRedirect: "/", session: false }),
   (req, res) => {
-    // Generate JWT
+    // Generate JWT here and send it to the client
     const token = jwt.sign(
       { id: req.user.id },
-      process.env.JWT_SECRET || "your_jwt_secret_key",
-      { expiresIn: "1d" } // Token expiration time
+      process.env.JWT_SECRET || 'your_jwt_secret_key',
+      { expiresIn: '1d' }
     );
-
-    // Redirect to frontend with token in URL (less secure)
-    res.redirect(`${process.env.CLIENT_URL}/?token=${token}`);
+    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
   }
 );
 
