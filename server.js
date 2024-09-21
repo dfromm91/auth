@@ -18,6 +18,7 @@ app.use(
     methods: ["GET", "POST"],
     credentials: true, // Allow credentials like cookies/sessions
     preflightContinue: false,
+    
   })
 );
 
@@ -35,6 +36,7 @@ app.use(
       sameSite: "None", // For cross-origin requests
       secure: true, // Secure cookies in production
       maxAge: 1000 * 60 * 60 * 24, // 1 day expiration
+      domain: 'auth-zb77.onrender.com'
     },
   })
 );
