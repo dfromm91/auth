@@ -113,7 +113,7 @@ app.get(
       process.env.JWT_SECRET || 'your_jwt_secret_key',
       { expiresIn: '1d' }
     );
-    res.redirect(`https:bananagrams.onrender.com/auth/callback?token=${token}`);
+    res.redirect(`https://bananagrams.onrender.com/auth/callback?token=${token}`);
   }
 );
 
