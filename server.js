@@ -14,8 +14,7 @@ const app = express();
 // CORS configuration
 app.use(
   cors({
-    origin: "https://bananagrams.onrender.com", // Your React frontend
-    methods: ["GET", "POST"],
+    origin: ["https://bananagrams.onrender.com","http://localhost:5173"], // Your React frontend
     credentials: true, // Allow credentials like cookies/sessions
     preflightContinue: false,
     
