@@ -106,21 +106,20 @@ app.get(
 
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/", session: false }),
+  passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
-    console.log("OAuth success, user authenticated:", req.user);
-
     // Generate JWT
     const token = jwt.sign(
       { id: req.user.id },
       process.env.JWT_SECRET || "your_jwt_secret_key",
-      { expiresIn: "1d" } // Token expires in 1 day
+      { expiresIn: "1d" } // Token expiration time
     );
 
-    // Send the JWT to the client
-    res.json({ token });
+    // Redirect to frontend with token in URL (less secure)
+    res.redirect(`${process.env.CLIENT_URL}/?token=${token}`);
   }
 );
+
 
 // Logout route (Token-based approach doesn't require server-side session destruction)
 app.get("/logout", (req, res) => {
