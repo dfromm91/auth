@@ -1,4 +1,4 @@
-require("dotenv").config(); // Ensure this is at the top
+require("dotenv").config(); 
 const express = require("express");
 const mongoose = require("mongoose");
 const passport = require("passport");
@@ -15,7 +15,7 @@ const app = express();
 // CORS configuration
 app.use(
   cors({
-    origin: ["https://bananagrams.onrender.com", "http://localhost:5173"], // Your React frontend
+    origin: ["https://bananagrams.onrender.com", "http://localhost:5173"], 
     credentials: true, // Allow credentials like cookies/sessions
     preflightContinue: false,
   })
@@ -144,20 +144,16 @@ app.get("/", (req, res) => {
 });
 
 // Leaderboard route (Protected with JWT)
-app.get(
-  "/leaderboard",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    try {
-      const leaderboard = await User.find().sort({ wins: -1 }).limit(10);
-      console.log("Leaderboard fetched:", leaderboard);
-      res.json(leaderboard);
-    } catch (err) {
-      console.error("Error fetching leaderboard:", err);
-      res.status(500).json({ error: "Failed to fetch leaderboard" });
-    }
+app.get("/leaderboard", async (req, res) => {
+  try {
+    const leaderboard = await User.find().sort({ wins: -1 }).limit(10);
+    console.log("Leaderboard fetched:", leaderboard);
+    res.json(leaderboard);
+  } catch (err) {
+    console.error("Error fetching leaderboard:", err);
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
-);
+});
 
 // Update wins route (Protected with JWT)
 app.post(
@@ -198,7 +194,7 @@ app.post(
         return res.status(404).json({ success: false, message: "User not found" });
       }
 
-      user.losses += 1; // Increment the user's losses
+      user.losses += 1; 
       await user.save();
       console.log("Losses incremented for user:", user);
       return res.json({ success: true, message: "Losses incremented", losses: user.losses });
