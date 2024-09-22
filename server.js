@@ -198,22 +198,18 @@ app.post("/update-losses", async (req, res) => {
 });
 
 // Fetch user's profile by Google ID (Protected with JWT)
-app.get(
-  "/profile/:googleId",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    console.log("Fetching profile for googleId:", req.params.googleId);
-    try {
-      const user = await User.findOne({ googleId: req.params.googleId });
-      if (!user) {
-        console.log("User not found:", req.params.googleId);
-        return res.status(404).json({ message: "User not found" });
-      }
-      console.log("User profile fetched:", user);
-      res.json({ wins: user.wins, losses: user.losses });
-    } catch (error) {
-      console.error("Error fetching user stats:", error);
-      res.status(500).json({ message: "Server error" });
+app.get("/profile/:googleId", async (req, res) => {
+  console.log("Fetching profile for googleId:", req.params.googleId);
+  try {
+    const user = await User.findOne({ googleId: req.params.googleId });
+    if (!user) {
+      console.log("User not found:", req.params.googleId);
+      return res.status(404).json({ message: "User not found" });
     }
+    console.log("User profile fetched:", user);
+    res.json({ wins: user.wins, losses: user.losses });
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    res.status(500).json({ message: "Server error" });
   }
-);
+});
