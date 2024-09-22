@@ -155,55 +155,47 @@ app.get("/leaderboard", async (req, res) => {
   }
 });
 
-// Update wins route (Protected with JWT)
-app.post(
-  "/update-wins",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    const userId = req.user.id;
-    console.log("Updating wins for user ID:", userId);
-    try {
-      const user = await User.findById(userId);
-      if (!user) {
-        console.log("User not found:", userId);
-        return res.status(404).json({ success: false, message: "User not found" });
-      }
-
-      user.wins += 1; // Increment the user's wins
-      await user.save();
-      console.log("Wins incremented for user:", user);
-      return res.json({ success: true, message: "Wins incremented", wins: user.wins });
-    } catch (error) {
-      console.error("Error updating wins:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
+// Update wins route
+app.post("/update-wins", async (req, res) => {
+  const { googleId } = req.body; // Use the Google ID from the request body
+  console.log("Updating wins for Google ID:", googleId);
+  try {
+    const user = await User.findOne({ googleId });
+    if (!user) {
+      console.log("User not found:", googleId);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
+
+    user.wins += 1; // Increment the user's wins
+    await user.save();
+    console.log("Wins incremented for user:", user);
+    return res.json({ success: true, message: "Wins incremented", wins: user.wins });
+  } catch (error) {
+    console.error("Error updating wins:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
-);
+});
 
-// Update losses route (Protected with JWT)
-app.post(
-  "/update-losses",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    const userId = req.user.id;
-    console.log("Updating losses for user ID:", userId);
-    try {
-      const user = await User.findById(userId);
-      if (!user) {
-        console.log("User not found:", userId);
-        return res.status(404).json({ success: false, message: "User not found" });
-      }
-
-      user.losses += 1; 
-      await user.save();
-      console.log("Losses incremented for user:", user);
-      return res.json({ success: true, message: "Losses incremented", losses: user.losses });
-    } catch (error) {
-      console.error("Error updating losses:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
+// Update losses route (No JWT authentication)
+app.post("/update-losses", async (req, res) => {
+  const { googleId } = req.body; // Use the Google ID from the request body
+  console.log("Updating losses for Google ID:", googleId);
+  try {
+    const user = await User.findOne({ googleId });
+    if (!user) {
+      console.log("User not found:", googleId);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
+
+    user.losses += 1; // Increment the user's losses
+    await user.save();
+    console.log("Losses incremented for user:", user);
+    return res.json({ success: true, message: "Losses incremented", losses: user.losses });
+  } catch (error) {
+    console.error("Error updating losses:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
-);
+});
 
 // Fetch user's profile by Google ID (Protected with JWT)
 app.get(
